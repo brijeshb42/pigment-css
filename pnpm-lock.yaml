@@ -483,6 +483,9 @@ importers:
       '@emotion/css':
         specifier: ^11.13.4
         version: 11.13.4
+      '@pigment-css/shared':
+        specifier: workspace:*
+        version: link:../pigment-css-shared
       '@pigment-css/theme':
         specifier: workspace:^
         version: link:../pigment-css-theme
@@ -626,6 +629,15 @@ importers:
       react:
         specifier: 18.3.1
         version: 18.3.1
+
+  packages/pigment-css-shared:
+    dependencies:
+      '@wyw-in-js/processor-utils':
+        specifier: ^0.5.4
+        version: 0.5.5
+      '@wyw-in-js/shared':
+        specifier: ^0.5.4
+        version: 0.5.5
 
   packages/pigment-css-theme:
     devDependencies:

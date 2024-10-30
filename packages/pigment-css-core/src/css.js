@@ -1,4 +1,4 @@
-import { generateErrorMessage } from "./utils";
+import { generateErrorMessage } from './utils';
 
 /**
  * `__wyw_dynamic_import` is a special global var that is set during the evaluation phase by wyw.
@@ -6,10 +6,5 @@ import { generateErrorMessage } from "./utils";
  * We do not want to throw error in that case as we want the evaluation to happen.
  */
 export default function css() {
-  if (typeof __wyw_dynamic_import !== 'undefined') {
-    return;
-  }
-  console.warn(
-    generateErrorMessage('css')
-  );
+  console.error(generateErrorMessage('css'));
 }

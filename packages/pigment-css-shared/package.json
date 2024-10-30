@@ -1,15 +1,15 @@
 {
-  "name": "@pigment-css/core",
+  "name": "@pigment-css/shared",
   "version": "0.0.25",
   "main": "build/index.js",
   "module": "build/index.mjs",
   "types": "build/index.d.ts",
   "author": "MUI Team",
-  "description": "A zero-runtime CSS-in-JS library.",
+  "description": "Node utilities to be used internally across Pigment CSS libraries.",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/mui/pigment-css.git",
-    "directory": "packages/pigment-css-core"
+    "directory": "packages/pigment-css-shared"
   },
   "license": "MIT",
   "bugs": {
@@ -25,40 +25,23 @@
     "watch": "tsup --watch --clean false",
     "copy-license": "node ../../scripts/pigment-license.mjs",
     "build": "tsup",
-    "test": "cd ../../ && cross-env NODE_ENV=test BABEL_ENV=coverage nyc --reporter=text mocha 'packages/pigment-css-core/**/*.test.{js,ts,tsx}'",
-    "test:update": "cd ../../ && cross-env NODE_ENV=test UPDATE_FIXTURES=true mocha 'packages/pigment-css-core/**/*.test.{js,ts,tsx}'",
-    "test:ci": "cd ../../ && cross-env NODE_ENV=test BABEL_ENV=coverage nyc --reporter=lcov --report-dir=./coverage/pigment-css-core mocha 'packages/pigment-css-core/**/*.test.{js,ts,tsx}'",
+    "test": "cd ../../ && cross-env NODE_ENV=test BABEL_ENV=coverage nyc --reporter=text mocha 'packages/pigment-css-shared/**/*.test.{js,ts,tsx}'",
+    "test:update": "cd ../../ && cross-env NODE_ENV=test UPDATE_FIXTURES=true mocha 'packages/pigment-css-shared/**/*.test.{js,ts,tsx}'",
+    "test:ci": "cd ../../ && cross-env NODE_ENV=test BABEL_ENV=coverage nyc --reporter=lcov --report-dir=./coverage/pigment-css-shared mocha 'packages/pigment-css-shared/**/*.test.{js,ts,tsx}'",
     "typescript": "tsc --noEmit -p ."
   },
   "dependencies": {
-    "@babel/types": "^7.25.8",
-    "@emotion/css": "^11.13.4",
-    "@pigment-css/shared": "workspace:*",
-    "@pigment-css/theme": "workspace:^",
     "@wyw-in-js/processor-utils": "^0.5.4",
-    "@wyw-in-js/shared": "^0.5.4",
-    "csstype": "^3.1.3",
-    "lodash": "^4.17.21"
+    "@wyw-in-js/shared": "^0.5.4"
   },
   "devDependencies": {},
   "sideEffects": false,
   "publishConfig": {
     "access": "public"
   },
-  "wyw-in-js": {
-    "tags": {
-      "keyframes": "./exports/keyframes.js",
-      "generateAtomics": "./exports/generateAtomics.js",
-      "css": "./exports/css.js",
-      "globalCss": "./exports/globalCss.js"
-    }
-  },
   "files": [
     "build",
-    "exports",
-    "processors",
     "package.json",
-    "styles.css",
     "LICENSE"
   ],
   "exports": {
@@ -71,14 +54,7 @@
       "require": "./build/index.js",
       "default": "./theme/index.js"
     },
-    "./package.json": "./package.json",
-    "./styles.css": {
-      "require": "./build/index.js",
-      "default": "./styles.css"
-    },
-    "./exports/*": {
-      "default": "./exports/*.js"
-    }
+    "./package.json": "./package.json"
   },
   "nx": {
     "targets": {
@@ -102,9 +78,7 @@
       },
       "build": {
         "outputs": [
-          "{projectRoot}/build",
-          "{projectRoot}/processors",
-          "{projectRoot}/exports"
+          "{projectRoot}/build"
         ]
       }
     }

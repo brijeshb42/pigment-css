@@ -1,7 +1,8 @@
 import { BaseProcessor } from '@pigment-css/shared';
+import { ValueCache } from '@wyw-in-js/processor-utils';
 
 /**
- * @description Scope css class generation similar to css from emotion.
+ * Scoped css class generation similar to css from emotion.
  *
  * @example
  * ```ts
@@ -15,6 +16,9 @@ import { BaseProcessor } from '@pigment-css/shared';
  * <html className={class1} />
  */
 export default class CssProcessor extends BaseProcessor {
+  build(values: ValueCache): void {
+    throw new Error('Method not implemented.');
+  }
   getBaseClass(): string | undefined {
     throw new Error('Method not implemented.');
   }

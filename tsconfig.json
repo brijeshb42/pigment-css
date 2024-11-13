@@ -14,6 +14,7 @@
     "noErrorTruncation": false,
     "allowJs": true,
     "paths": {
+      "@babel/types": ["./node_modules/@babel/types/lib/index"],
       "@pigment-css/nextjs-plugin": ["./packages/pigment-css-nextjs-plugin/src"],
       "@pigment-css/nextjs-plugin/*": ["./packages/pigment-css-nextjs-plugin/src/*"],
       "@pigment-css/react": ["./packages/pigment-css-react/src"],
@@ -23,7 +24,13 @@
       "@mui-internal/api-docs-builder": ["./node_modules/@mui/monorepo/packages/api-docs-builder"],
       "@mui-internal/api-docs-builder/*": [
         "./node_modules/@mui/monorepo/packages/api-docs-builder/*"
-      ]
+      ],
+      "@pigment-css/theme": ["./packages/pigment-css-theme/src"],
+      "@pigment-css/theme/*": ["./packages/pigment-css-theme/src/*"],
+      "@pigment-css/core": ["./packages/pigment-css-core/src"],
+      "@pigment-css/core/*": ["./packages/pigment-css-core/src/*"],
+      "@pigment-css/shared": ["./packages/pigment-css-shared/src"],
+      "@pigment-css/shared/*": ["./packages/pigment-css-shared/src/*"]
     },
     // Otherwise we get react-native typings which conflict with dom.lib.
     "types": ["node", "react"]

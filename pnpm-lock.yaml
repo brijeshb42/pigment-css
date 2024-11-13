@@ -66,6 +66,9 @@ importers:
       '@babel/preset-typescript':
         specifier: ^7.26.0
         version: 7.26.0(@babel/core@7.26.0)
+      '@babel/types':
+        specifier: ^7.26.0
+        version: 7.26.0
       '@mui/internal-docs-utils':
         specifier: ^1.0.15
         version: 1.0.15

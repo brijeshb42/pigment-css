@@ -58,6 +58,7 @@
     "@babel/preset-env": "^7.26.0",
     "@babel/preset-react": "^7.25.9",
     "@babel/preset-typescript": "^7.26.0",
+    "@babel/types": "^7.26.0",
     "@mui/internal-docs-utils": "^1.0.15",
     "@mui/internal-markdown": "^1.0.19",
     "@mui/internal-scripts": "^1.0.26",

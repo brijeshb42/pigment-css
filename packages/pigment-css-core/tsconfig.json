@@ -10,6 +10,21 @@
     "types": ["node", "mocha"],
     "jsx": "react-jsx"
   },
-  "include": ["src/**/*.tsx", "src/**/*.js", "src/**/*.ts", "tests/**/*.spec.ts", "tests/**/*.spec.tsx"],
-  "exclude": ["./tsup.config.ts"]
+  "include": [
+    "src/**/*.tsx",
+    "src/**/*.js",
+    "src/**/*.ts",
+    "tests/**/*.spec.ts",
+    "tests/**/*.spec.tsx",
+    "src/exports/css.cjs"
+  ],
+  "exclude": ["./tsup.config.ts"],
+  "references": [
+    {
+      "path": "../pigment-css-theme/"
+    },
+    {
+      "path": "../pigment-css-shared/"
+    }
+  ]
 }

@@ -1,4 +1,5 @@
-import { StrictOptions } from '@wyw-in-js/shared';
+import { Theme } from '@pigment-css/theme';
+import { IOptions } from '@wyw-in-js/processor-utils';
 
 export type GenerateClassData<M, E> = {
   /**
@@ -26,9 +27,14 @@ export type GenerateClassData<M, E> = {
   extraData: E;
 };
 
-/**
- * The
- */
-export type PigmentConfig = Pick<StrictOptions, 'classNameSlug'> & {
+type PigmentFeature = {
+  useLayer?: boolean;
+};
+
+export type PigmentConfig = IOptions & {
+  features?: PigmentFeature;
   generateClassName<M, E>(data: GenerateClassData<M, E>): string;
+  themeArgs?: {
+    theme: Theme;
+  };
 };

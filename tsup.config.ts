@@ -33,4 +33,9 @@ export default defineConfig({
   loader: {
     '.js': 'jsx',
   },
+  outExtension(ctx) {
+    return {
+      js: ctx.format === 'cjs' ? '.js' : '.mjs',
+    };
+  },
 });

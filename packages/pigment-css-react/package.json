@@ -111,7 +111,7 @@
         "default": "./build/index.mjs"
       },
       "require": "./build/index.js",
-      "default": "./theme/index.js"
+      "default": "./build/index.js"
     },
     "./package.json": "./package.json",
     "./theme": {

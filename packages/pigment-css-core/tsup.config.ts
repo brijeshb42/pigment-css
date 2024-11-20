@@ -18,6 +18,7 @@ export default defineConfig([
   {
     ...baseConfig,
     entry: processors.map((file) => `./src/processors/${file}.ts`),
-    outDir: 'processors',
+    outDir: 'build/processors',
+    cjsInterop: true,
   },
 ]);

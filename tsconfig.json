@@ -29,11 +29,18 @@
       "@pigment-css/theme/*": ["./packages/pigment-css-theme/src/*"],
       "@pigment-css/core": ["./packages/pigment-css-core/src"],
       "@pigment-css/core/*": ["./packages/pigment-css-core/src/*"],
-      "@pigment-css/shared": ["./packages/pigment-css-shared/src"],
+      "@pigment-css/shared": ["./packages/pigment-css-shared/src/index"],
       "@pigment-css/shared/*": ["./packages/pigment-css-shared/src/*"]
     },
     // Otherwise we get react-native typings which conflict with dom.lib.
     "types": ["node", "react"]
   },
-  "exclude": ["**/.*/", "**/build", "**/node_modules", "docs/export"]
+  "include": [
+    "src/**/*.tsx",
+    "src/**/*.js",
+    "src/**/*.ts",
+    "tests/**/*.spec.ts",
+    "tests/**/*.spec.tsx"
+  ],
+  "exclude": ["**/.*/", "**/build", "**/node_modules", "docs/export", "**/tsup.config.ts"]
 }

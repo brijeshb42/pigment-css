@@ -1,9 +1,12 @@
 import { CSSObjectNoCallback, Primitve, ThemeArgs } from './base';
 
-type CssArg =
-  | ((themeArgs: ThemeArgs) => CSSObjectNoCallback | string)
-  | CSSObjectNoCallback
-  | string;
+type IVariant = {
+  variants?: Record<string, Record<string, CSSObjectNoCallback>>;
+};
+
+type CssObj = CSSObjectNoCallback & IVariant;
+
+type CssArg = ((themeArgs: ThemeArgs) => CssObj | string) | CssObj | string;
 type CssFn = (themeArgs: ThemeArgs) => string | number;
 
 interface BaseInterface {

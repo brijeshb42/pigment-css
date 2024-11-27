@@ -83,6 +83,11 @@
     },
     "./exports/*": {
       "default": "./exports/*.js"
+    },
+    "./runtime": {
+      "import": "./build/runtime/index.mjs",
+      "require": "./build/runtime/index.js",
+      "default": "./build/runtime/index.js"
     }
   },
   "nx": {

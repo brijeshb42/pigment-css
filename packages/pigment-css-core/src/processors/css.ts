@@ -15,8 +15,10 @@ import {
   type PigmentConfig,
   BaseProcessor,
   parseArray,
-  processStyle,
+  processStyleObjects,
   serializeStyles,
+  StyleObjectReturn,
+  valueToLiteral,
 } from '@pigment-css/shared';
 import {
   type Expression,
@@ -188,12 +190,23 @@ class CssTaggedTemplateProcessor extends BaseCssProcessor {
     this.classNames.push(className);
     this.artifacts.push(['css', [rules, sourceMapReplacements]]);
   }
+
+  doRuntimeReplacement() {
+    const baseClasses = this.astService.stringLiteral(this.classNames.join(' '));
+    const cssCallId = this.astService.addNamedImport('css', '@pigment-css/core/runtime');
+    const args = this.astService.objectExpression([
+      this.astService.objectProperty(this.astService.identifier('classes'), baseClasses),
+    ]);
+    this.replacer(this.astService.callExpression(cssCallId, [args]), true);
+  }
 }
 
 /**
  * Only deals with css(...styleObjects) or or css(styleObject) css(metadata, [...styleObjects]) calls.
  */
 class CssObjectProcessor extends BaseCssProcessor {
+  variants: { $$cls: string; props: Record<string, string | number> }[] = [];
+
   getDependencies(): ExpressionValue[] {
     const [, [, ...callParams]] = this.params;
     return callParams as ExpressionValue[];
@@ -202,8 +215,6 @@ class CssObjectProcessor extends BaseCssProcessor {
   build(values: ValueCache): void {
     const [, [, ...callParams]] = this.params;
     const { themeArgs, features: { useLayer = true } = {} } = this.options as PigmentConfig;
-    const baseClass = this.getClassName();
-    let variableCounter = 0;
 
     const evaluatedValues = (callParams as (LazyValue | FunctionValue)[]).map((param) =>
       values.get(param.ex.name),
@@ -241,68 +252,87 @@ class CssObjectProcessor extends BaseCssProcessor {
       locations.push(...(callParams as ExpressionValue[]).map((p) => p.ex.loc));
     }
 
-    stylesList.forEach((style, index) => {
-      const location = locations[index] ?? this.location;
-      let cssText: string = '';
-      if (typeof style === 'string') {
-        ({ styles: cssText } = serializeStyles([style]));
-      } else if (style && typeof style === 'object') {
-        const res = processStyle(style, {
-          getVariableName() {
-            variableCounter += 1;
-            return `${baseClass}-${variableCounter}`;
-          },
-        });
-        const { styles: cssStyles } = serializeStyles([res.result as any]);
-        cssText = cssStyles;
-      } else if (typeof style === 'function') {
-        const cssObjectOrStr = style(themeArgs as unknown as ThemeArgs);
-        if (typeof cssObjectOrStr === 'string') {
-          cssText = cssObjectOrStr;
-        } else {
-          const res = processStyle(cssObjectOrStr, {
-            getVariableName() {
-              variableCounter += 1;
-              return `${baseClass}-${variableCounter}`;
-            },
-          });
-          ({ styles: cssText } = serializeStyles([res.result as any]));
+    const styles = stylesList.map((item) =>
+      typeof item === 'function' ? item(themeArgs as unknown as ThemeArgs) : item,
+    );
+    let count = 0;
+    const result = processStyleObjects(styles, {
+      getClassName: (variantName: string | undefined, variantValue: string | undefined) => {
+        if (!variantName) {
+          return this.getClassName();
         }
-      }
+        return `${this.getClassName()}-${variantName}-${variantValue}`;
+      },
+      getVariableName: () => {
+        count += 1;
+        return `${this.getClassName()}-${count}`;
+      },
+    });
 
-      if (!cssText) {
-        return;
-      }
-      if (useLayer) {
-        cssText = `@layer pigment.base{${cssText}}`;
-      }
-      const className = `${baseClass}${index === 0 ? '' : `-${index}`}`;
-      this.classNames.push(className);
-      const rules: Rules = {
-        [`.${className}`]: {
-          className,
+    const addStyles = (s: StyleObjectReturn[], layer?: string) => {
+      const rules: Rules = {};
+      s.forEach((style, index) => {
+        const location = locations[index] ?? locations[0];
+        const cssText =
+          layer && useLayer ? `@layer pigment.${layer} {${style.cssText}}` : style.cssText;
+        rules[`.${style.className}`] = {
+          className: style.className,
           cssText,
           displayName: this.displayName,
           start: location?.start ?? null,
-        },
-      };
-      const sourceMapReplacements: Replacements = [
-        {
-          length: cssText.length,
-          original: {
-            start: {
-              column: location?.start.column ?? 0,
-              line: location?.start.line ?? 0,
-            },
-            end: {
-              column: location?.end.column ?? 0,
-              line: location?.end.line ?? 0,
-            },
-          },
-        },
-      ];
-      this.artifacts.push(['css', [rules, sourceMapReplacements]]);
-    });
+        };
+
+        const sourceMapReplacements: Replacements =
+          layer === 'base'
+            ? [
+                {
+                  length: cssText.length,
+                  original: {
+                    start: {
+                      column: location?.start.column ?? 0,
+                      line: location?.start.line ?? 0,
+                    },
+                    end: {
+                      column: location?.end.column ?? 0,
+                      line: location?.end.line ?? 0,
+                    },
+                  },
+                },
+              ]
+            : [];
+
+        if (Object.keys(style.serializables).length > 0) {
+          this.variants.push({
+            $$cls: style.className,
+            props: style.serializables,
+          });
+        }
+
+        this.artifacts.push(['css', [rules, sourceMapReplacements]]);
+      });
+    };
+    this.classNames.push(...result.base.map((item) => item.className));
+    addStyles(result.base, 'base');
+    addStyles(result.variants, 'variants');
+    addStyles(result.compoundVariants, 'compoundvariants');
+  }
+
+  doRuntimeReplacement() {
+    const baseClasses = this.astService.stringLiteral(this.classNames.join(' '));
+    const cssCallId = this.astService.addNamedImport('css', '@pigment-css/core/runtime');
+    const [, [, ...callParams]] = this.params;
+    const args = this.astService.objectExpression([
+      this.astService.objectProperty(this.astService.identifier('classes'), baseClasses),
+    ]);
+    if (this.variants.length > 0) {
+      args.properties.push(
+        this.astService.objectProperty(
+          this.astService.identifier('variants'),
+          valueToLiteral(this.variants, callParams[1] as ExpressionValue),
+        ),
+      );
+    }
+    this.replacer(this.astService.callExpression(cssCallId, [args]), true);
   }
 }
 

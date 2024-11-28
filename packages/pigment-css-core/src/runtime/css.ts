@@ -10,7 +10,7 @@ type VariantInfo = {
 
 type ClassInfo = {
   classes: string;
-  variants: VariantInfo[];
+  variants?: VariantInfo[];
 };
 
 function isVariantMatching(props: Props, variantProps: Props) {

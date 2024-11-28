@@ -17,7 +17,7 @@ export default defineConfig([
   },
   {
     ...baseConfig,
-    entry: ['./src/runtime/index.js'],
+    entry: ['./src/runtime/index.ts'],
     outDir: 'build/runtime',
   },
   {

@@ -73,7 +73,10 @@ function transformProbableCssVar(value: string): string {
   });
 }
 
-function processStyle<T extends object>(t: T, options: ProcessStyleOptions): ProcessStyleReturn<T> {
+export function processStyle<T extends object>(
+  t: T,
+  options: ProcessStyleOptions,
+): ProcessStyleReturn<T> {
   const result: Record<string, string | number | object> = {};
   let variables: ProcessStyleReturn<T>['variables'] = {};
 
@@ -100,7 +103,7 @@ function processStyle<T extends object>(t: T, options: ProcessStyleOptions): Pro
     } else if (typeof value === 'function') {
       const variableRaw = getCSSVar(cssesc(options.getVariableName()));
       variables[variableRaw] = [value, isUnitLess(newKey) ? 1 : 0];
-      result[newKey] = getCSSVar(variableRaw, true);
+      result[newKey] = `var(${variableRaw})`;
     }
   });
   return {

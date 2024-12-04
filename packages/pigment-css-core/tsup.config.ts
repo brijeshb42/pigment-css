@@ -1,7 +1,7 @@
 import { Options, defineConfig } from 'tsup';
 import config from '../../tsup.config';
 
-const processors = ['css'];
+const processors = ['css', 'keyframes'];
 
 const baseConfig: Options = {
   ...(config as Options),

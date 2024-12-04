@@ -23,7 +23,7 @@ describe('processStyle', () => {
     expect(res).to.deep.equal({
       result: {
         '---hello': 'world',
-        '--hello-1': 'world',
+        '--hello1': 'world',
         '.cls1': {
           border: '1px solid var(--palette-primary-main) var(---hello)',
           color: 'var(--var-1)',

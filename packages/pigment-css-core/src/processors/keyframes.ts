@@ -8,7 +8,7 @@ import type {
 } from '@wyw-in-js/processor-utils';
 import { type Replacements, type Rules, ValueType } from '@wyw-in-js/shared';
 import { BaseProcessor, validateParams } from '@wyw-in-js/processor-utils';
-import { PigmentConfig, serializeStyles, processStyle } from '@pigment-css/shared';
+import { PigmentConfig, serializeStyles, processStyle } from '@pigment-css/utils';
 
 export type Primitive = string | number | boolean | null | undefined;
 

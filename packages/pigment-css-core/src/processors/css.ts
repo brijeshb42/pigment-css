@@ -19,7 +19,7 @@ import {
   serializeStyles,
   StyleObjectReturn,
   valueToLiteral,
-} from '@pigment-css/shared';
+} from '@pigment-css/utils';
 import {
   type Expression,
   type Params,

@@ -14,18 +14,15 @@ const DATA_DIR = path.join(currentDirectory, 'data');
 
 const nextConfig: NextConfig = {
   trailingSlash: false,
+  pageExtensions: ['mdx', 'tsx'],
   env: {
     DATA_DIR,
     CURRENT_VERSION: rootPackage.version,
+    APP_NAME: 'Pigment CSS',
+    APP_DESC: rootPackage.description,
   },
-  distDir: 'export',
-  output: process.env.NODE_ENV === 'production' ? 'export' : undefined,
-  eslint: {
-    ignoreDuringBuilds: true,
-  },
+  ...(process.env.NODE_ENV === 'production' && { distDir: 'export', output: 'export' }),
   devIndicators: {
-    buildActivity: true,
-    buildActivityPosition: 'bottom-right',
     appIsrStatus: false,
   },
   experimental: {
@@ -41,7 +38,10 @@ const theme = extendTheme({
   },
 });
 
-export default withPigment(withDocsInfra(nextConfig), {
+const docsConfig = withDocsInfra(nextConfig);
+const { optimizeFonts, ...result } = docsConfig;
+
+export default withPigment(result, {
   theme,
   displayName: true,
   sourceMap: process.env.NODE_ENV !== 'production',

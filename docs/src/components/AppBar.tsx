@@ -4,7 +4,6 @@ import packageJson from '../../../package.json';
 import { IconLinkButton } from './IconLinkButton';
 import { IconButton } from './IconButton';
 import { DocsVersionSelector } from './DocsVersionSelector';
-import { PigmentIcon } from './icons/Pigment';
 import { GitHubIcon } from './icons/Github';
 import { SettingsIcon } from './icons/Settings';
 
@@ -43,7 +42,14 @@ export function AppBar() {
         })}
       >
         <IconLinkButton useNextLink href="/" label="Pigment CSS" size={3}>
-          <PigmentIcon />
+          <img
+            alt="Pigment CSS logo"
+            width="30"
+            height="30"
+            src={
+              process.env.NODE_ENV === 'production' ? '/static/logo.svg' : '/static/logo-dev.svg'
+            }
+          />
         </IconLinkButton>
         {supportedVersions.length > 1 && (
           <DocsVersionSelector currentVersion={currentVersion} versions={supportedVersions} />

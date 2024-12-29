@@ -1,10 +1,8 @@
-declare global {
-  namespace NodeJS {
-    interface ProcessEnv {
-      NODE_ENV: string;
-      REPO_ROOT: string;
-      DATA_DIR: string;
-      DEFAULT_BRANCH: string;
-    }
+declare namespace NodeJS {
+  interface ProcessEnv {
+    DATA_DIR: string;
+    CURRENT_VERSION: string;
+    APP_NAME: string;
+    APP_DESC: string;
   }
 }

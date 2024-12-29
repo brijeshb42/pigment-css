@@ -1,6 +1,7 @@
+import * as React from 'react';
+import type { Metadata, Viewport } from 'next';
 import { styled } from '@pigment-css/react';
-import { Metadata } from 'next';
-import Link from 'next/link';
+import { Link } from '@/components/Link';
 
 const Page = styled.div`
   display: grid;
@@ -70,15 +71,52 @@ export default function Home() {
   return (
     <Page>
       <Main>
-        <Link href="/getting-started/overview">Get Started</Link>
+        <img
+          alt={process.env.APP_NAME}
+          width={25}
+          src="/static/logo.svg"
+          className="mb-8 ml-px"
+          aria-label={process.env.APP_NAME}
+        />
+        <h1 className="HomepageHeading">{process.env.APP_DESC}</h1>
+        <Link href="/getting-started/overview">Documentation</Link>
       </Main>
     </Page>
   );
 }
 
+const description = process.env.APP_DESC;
+
 export const metadata: Metadata = {
-  title: {
-    absolute: 'Pigment CSS',
-    template: '%s | Pigment CSS',
+  description,
+  twitter: {
+    description,
   },
+  openGraph: {
+    description,
+  },
+};
+
+export const viewport: Viewport = {
+  themeColor: [
+    // Desktop Safari page background
+    {
+      media: '(prefers-color-scheme: light) and (min-width: 1024px)',
+      color: 'oklch(95% 0.25% 264)',
+    },
+    {
+      media: '(prefers-color-scheme: dark) and (min-width: 1024px)',
+      color: 'oklch(25% 1% 264)',
+    },
+
+    // Mobile Safari header background (match the page)
+    {
+      media: '(prefers-color-scheme: light)',
+      color: '#FFF',
+    },
+    {
+      media: '(prefers-color-scheme: dark)',
+      color: '#000',
+    },
+  ],
 };

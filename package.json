@@ -1,6 +1,7 @@
 {
   "name": "@pigment-css/monorepo",
   "version": "0.0.29",
+  "description": "A zero-runtime CSS in JS library.",
   "private": true,
   "scripts": {
     "preinstall": "npx only-allow pnpm",

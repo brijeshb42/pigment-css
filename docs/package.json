@@ -30,7 +30,7 @@
   "devDependencies": {
     "@babel/plugin-proposal-explicit-resource-management": "^7.25.9",
     "@babel/plugin-transform-unicode-property-regex": "^7.25.9",
-    "@mui/monorepo": "github:mui/material-ui#ae455647016fe5dee968b017aa191e176bc113dd",
+    "@mui/monorepo": "github:mui/material-ui#6b5d751b0c7f46919cca75238b3da7ee751ac8a6",
     "@pigment-css/nextjs-plugin": "workspace:*",
     "@types/node": "^20",
     "@types/react": "^18",

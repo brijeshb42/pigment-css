@@ -1,5 +1,5 @@
 import type { CSSProperties, Primitive, ThemeArgs } from './base';
-import { BaseInterface, CssFn } from './css';
+import { BaseInterface } from './css';
 
 interface KeyframesObject {
   [key: string]: {
@@ -7,23 +7,18 @@ interface KeyframesObject {
   };
 }
 
-type KeyframesArg = ((themeArgs: ThemeArgs) => KeyframesObject) | KeyframesObject;
+type KeyframesFn = (themeArgs: ThemeArgs) => string;
+type KeyframesArg = KeyframesObject | string | ((themeArgs: ThemeArgs) => KeyframesObject | string);
 
-interface Keyframes {
-  /**
-   * @returns {string} The generated keyframe name to be referenced.
-   */
-  (arg: TemplateStringsArray, ...templateArgs: (Primitive | CssFn)[]): string;
-  <M extends BaseInterface>(
-    metadata: M,
-  ): (arg: TemplateStringsArray, ...templateArgs: (Primitive | CssFn)[]) => string;
-  /**
-   * @returns {string} The generated keyframe name to be referenced.
-   */
+interface KeyframesNoOption {
+  (arg: TemplateStringsArray, ...templateArgs: (Primitive | KeyframesFn)[]): string;
   (arg: KeyframesArg): string;
-  <M extends BaseInterface>(metadata: M, args: KeyframesArg): string;
 }
 
-declare const keyframes: Keyframes;
+interface KeyframesWithOption {
+  <M extends BaseInterface>(metadata: M): KeyframesNoOption;
+}
+
+declare const keyframes: KeyframesNoOption & KeyframesWithOption;
 
 export default keyframes;

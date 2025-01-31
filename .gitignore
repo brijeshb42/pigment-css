@@ -31,3 +31,4 @@ docs/public/static/blog/feed/*
 .github/styles/
 .nx/cache
 packages/**/LICENSE
+tmpapps/

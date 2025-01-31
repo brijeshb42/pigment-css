@@ -1,0 +1,34 @@
+{
+  "name": "@app/v8-styled-engine-test-app",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "babel src --extensions .ts,.js,.tsx,.jsx,.cjs,.mjs --out-dir lib"
+  },
+  "dependencies": {
+    "@pigment-css/v8-styled-engine": "workspace:*"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.26.7",
+    "@babel/cli": "^7.26.4",
+    "@babel/preset-env": "^7.26.7",
+    "@babel/preset-typescript": "^7.26.0",
+    "@pigment-css/babel-plugin": "workspace:*",
+    "babel-plugin-module-resolver": "^5.0.2"
+  },
+  "nx": {
+    "targets": {
+      "preview": {
+        "dependsOn": [
+          "^build"
+        ]
+      },
+      "dev": {
+        "dependsOn": [
+          "^build"
+        ]
+      }
+    }
+  }
+}

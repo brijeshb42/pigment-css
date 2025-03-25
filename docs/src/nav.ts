@@ -45,10 +45,6 @@ export const nav: NavItem[] = [
         label: 'Variants',
         href: '/features/variants',
       },
-      {
-        label: 'Composition',
-        href: '/features/composition',
-      },
     ],
   },
   {
@@ -60,24 +56,28 @@ export const nav: NavItem[] = [
         href: '/guides/how-it-works',
       },
       {
-        label: 'Migration',
-        href: '/guides/migration',
-        draft: true,
+        label: 'Composition',
+        href: '/guides/composition',
       },
-      {
-        label: 'UI Libraries',
-        href: '/guides/ui-libraries',
-        draft: true,
-      },
-      {
-        label: 'Light and Dark modes',
-        href: '/guides/light-and-dark-modes',
-      },
-      {
-        label: 'RTL support',
-        href: '/guides/rtl-support',
-        draft: true,
-      },
+      // {
+      //   label: 'Migration',
+      //   href: '/guides/migration',
+      //   draft: true,
+      // },
+      // {
+      //   label: 'UI Libraries',
+      //   href: '/guides/ui-libraries',
+      //   draft: true,
+      // },
+      // {
+      //   label: 'Light and Dark modes',
+      //   href: '/guides/light-and-dark-modes',
+      // },
+      // {
+      //   label: 'RTL support',
+      //   href: '/guides/rtl-support',
+      //   draft: true,
+      // },
     ],
   },
   {

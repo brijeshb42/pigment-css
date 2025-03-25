@@ -15,6 +15,7 @@
     "release:publish": "pnpm publish --recursive --tag latest",
     "release:publish:dry-run": "pnpm publish --recursive --tag latest --registry=\"http://localhost:4873/\"",
     "release:tag": "node scripts/releaseTag.mjs",
+    "docs:dev": "nx run docs:dev",
     "docs:build": "nx run docs:build",
     "extract-error-codes": "cross-env MUI_EXTRACT_ERROR_CODES=true lerna run --concurrency 8 build:modern",
     "install:codesandbox": "pnpm install --no-frozen-lockfile",
@@ -61,7 +62,7 @@
     "@mui/internal-markdown": "^1.0.19",
     "@mui/internal-scripts": "^1.0.26",
     "@mui/internal-test-utils": "1.0.19",
-    "@mui/monorepo": "github:mui/material-ui#ae455647016fe5dee968b017aa191e176bc113dd",
+    "@mui/monorepo": "github:mui/material-ui#v6.4.7",
     "@next/eslint-plugin-next": "^15.0.2",
     "@octokit/rest": "^21.0.2",
     "@playwright/test": "1.48.2",
@@ -123,9 +124,13 @@
   "engines": {
     "pnpm": "9.7.1"
   },
+  "resolutions": {
+    "@types/react": "19.0.8",
+    "@types/react-dom": "19.0.3"
+  },
   "nyc": {
     "include": [
-      "packages/mui*/src/**/*.{js,ts,tsx}"
+      "packages/pigment*/src/**/*.{js,ts,tsx}"
     ],
     "exclude": [
       "**/*.test.{js,ts,tsx}",

@@ -57,12 +57,6 @@ module.exports = {
     // Airbnb use warn https://github.com/airbnb/javascript/blob/63098cbb6c05376dbefc9a91351f5727540c1ce1/packages/eslint-config-airbnb-base/rules/style.js#L97
     // but eslint recommands error
     'func-names': 'error',
-    'no-restricted-imports': [
-      'error',
-      {
-        patterns: ['@mui/*/*/*'],
-      },
-    ],
     'no-continue': 'off',
     'no-constant-condition': 'error',
     // Use the proptype inheritance chain
@@ -203,6 +197,7 @@ module.exports = {
 
     'react/jsx-no-useless-fragment': ['error', { allowExpressions: true }],
     'lines-around-directive': 'off',
+    'react/prop-types': 'off',
   },
   overrides: [
     {
@@ -283,7 +278,7 @@ module.exports = {
     },
     // Next.js entry points pages
     {
-      files: ['docs/pages/**/*.js'],
+      files: ['docs/apps/**/*{.tsx,.ts,.js}'],
       rules: {
         'react/prop-types': 'off',
       },

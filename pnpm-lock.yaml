@@ -519,6 +519,9 @@ importers:
       '@babel/preset-typescript':
         specifier: ^7.26.0
         version: 7.26.0(@babel/core@7.26.0)
+      '@pigment-css/rust':
+        specifier: workspace:^
+        version: link:../pigment-css-rust
       '@pigment-css/theme':
         specifier: workspace:*
         version: link:../pigment-css-theme
@@ -729,6 +732,12 @@ importers:
       react:
         specifier: ^19.0.0
         version: 19.0.0
+
+  packages/pigment-css-rust:
+    devDependencies:
+      '@napi-rs/cli':
+        specifier: ^2.18.4
+        version: 2.18.4
 
   packages/pigment-css-theme:
     devDependencies:
@@ -2713,6 +2722,11 @@ packages:
     peerDependenciesMeta:
       '@types/react':
         optional: true
+
+  '@napi-rs/cli@2.18.4':
+    resolution: {integrity: sha512-SgJeA4df9DE2iAEpr3M2H0OKl/yjtg1BnRI5/JyowS71tUWhrfSu2LT0V3vlHET+g1hBVlrO60PmEXwUEKp8Mg==}
+    engines: {node: '>= 10'}
+    hasBin: true
 
   '@netlify/functions@3.0.0':
     resolution: {integrity: sha512-XXf9mNw4+fkxUzukDpJtzc32bl1+YlXZwEhc5ZgMcTbJPLpgRLDs5WWSPJ4eY/Mv1ZFvtxmMwmfgoQYVt68Qog==}
@@ -12701,6 +12715,8 @@ snapshots:
       react-is: 18.3.1
     optionalDependencies:
       '@types/react': 19.0.8
+
+  '@napi-rs/cli@2.18.4': {}
 
   '@netlify/functions@3.0.0':
     dependencies:

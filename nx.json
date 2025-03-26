@@ -15,7 +15,10 @@
         "{projectRoot}/runtime",
         "{projectRoot}/dist",
         "{projectRoot}/.next",
-        "{projectRoot}/exports"
+        "{projectRoot}/exports",
+        "{projectRoot}/*.node",
+        "{projectRoot}/*.d.ts",
+        "{projectRoot}/*.js"
       ]
     },
     "preview": {

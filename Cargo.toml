@@ -1,0 +1,13 @@
+[workspace]
+resolver = "2"
+members = [
+  "packages/pigment-css-rust"
+]
+
+[profile.canary]
+inherits = "release"
+debug = true
+
+[profile.release]
+lto = true
+strip = "symbols"

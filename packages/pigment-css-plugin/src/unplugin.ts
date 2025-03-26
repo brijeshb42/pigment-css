@@ -20,6 +20,7 @@ import {
 } from '@wyw-in-js/transform';
 import { createFilter, type FilterPattern } from '@rollup/pluginutils';
 import { logger as wywLogger } from '@wyw-in-js/shared';
+import { transform as pigmentTransform } from '@pigment-css/rust';
 
 import { AsyncResolver, handleUrlReplacement } from './utils';
 
@@ -297,6 +298,7 @@ export const plugin = createUnplugin<BundlerConfig>((options, meta) => {
     async transform(code, url) {
       const [filePath] = url.split('?', 1);
       const filename = path.normalize(filePath);
+      console.log(pigmentTransform(code, filename));
       const log = wywLogger.extend(nextJsOptions ? 'nextjs' : meta.framework);
       log('Transform', getFileIdx(filename));
       const pluginResolver = (

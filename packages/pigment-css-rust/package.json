@@ -35,6 +35,30 @@
     "build:debug": "napi build --platform",
     "prepublishOnly": "napi prepublish -t npm",
     "universal": "napi universal",
-    "version": "napi version"
+    "version": "napi version",
+    "test": "node script.mjs"
+  },
+  "nx": {
+    "targets": {
+      "test": {
+        "cache": false,
+        "dependsOn": [
+          "build"
+        ]
+      },
+      "test:ci": {
+        "cache": false,
+        "dependsOn": [
+          "build"
+        ]
+      },
+      "build": {
+        "outputs": [
+          "{projectRoot}/*.node",
+          "{projectRoot}/*.d.ts",
+          "{projectRoot}/*.js"
+        ]
+      }
+    }
   }
 }

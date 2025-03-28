@@ -1,16 +1,7 @@
+import * as fs from 'node:fs';
+
 import { transform } from './index.js';
 
-console.log(
-  transform(
-    `
-import { css } from 'pigment-css';
+const code = fs.readFileSync('./test.mjs', 'utf-8');
 
-const a = css\`
-  color: red;
-\`;
-
-console.log(a);
-`,
-    'test.js',
-  ),
-);
+console.log(transform(code, 'test.mjs').code);

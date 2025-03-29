@@ -1,8 +1,8 @@
 use oxc::allocator::{Allocator, Box as ArenaBox};
 use oxc::ast::ast::{
-  BindingIdentifier, CallExpression, Expression, FormalParameterKind, FunctionType,
-  IdentifierReference, ImportDeclaration, ImportDeclarationSpecifier, ImportOrExportKind, Program,
-  PropertyKind, Statement, TaggedTemplateExpression, VariableDeclaration, VariableDeclarator,
+  CallExpression, Expression, FormalParameterKind, FunctionType, IdentifierReference,
+  ImportDeclaration, ImportDeclarationSpecifier, ImportOrExportKind, Program, PropertyKind,
+  TaggedTemplateExpression,
 };
 use oxc::ast::NONE;
 use oxc::span::SPAN;
@@ -17,16 +17,17 @@ const PIGMENT_META_TAG: &str = "__pigment_meta";
 
 /// A traverser for Pigment CSS that handles theme transformations
 pub struct PigmentTraverse<'a> {
+  pub allowed_imports: HashMap<&'a str, HashSet<&'a str>>,
+  pub program_to_evaluate: Option<&'a Program<'a>>,
+  /// Maps symbol IDs to their import information
   file_path: &'a str,
   /// Maps import sources to their allowed identifiers
-  pub allowed_imports: HashMap<&'a str, HashSet<&'a str>>,
-  /// Maps symbol IDs to their import information
   imported_identifiers: HashMap<SymbolId, (&'a str, &'a str)>,
   /// Counter for generating unique identifiers
   counter: HashMap<&'a str, u32>,
   identifiers: HashSet<SymbolId>,
+  already_inserted_identifiers: HashSet<SymbolId>,
   is_inside_relevant_expression: bool,
-  pub program_to_evaluate: Option<&'a Program<'a>>,
 }
 
 impl<'a> PigmentTraverse<'a> {
@@ -39,6 +40,7 @@ impl<'a> PigmentTraverse<'a> {
       imported_identifiers: HashMap::new(),
       counter: HashMap::new(),
       identifiers: HashSet::new(),
+      already_inserted_identifiers: HashSet::new(),
       is_inside_relevant_expression: false,
       program_to_evaluate: None,
     }
@@ -63,6 +65,17 @@ impl<'a> PigmentTraverse<'a> {
   }
 
   /// Creates a Pigment meta object for evaluation-time replacement
+  /// ```js
+  /// {
+  ///   __pigment_meta: {
+  ///     tag: 'tag',
+  ///     import: 'import',
+  ///   },
+  ///   toString() {
+  ///     return 'class-name';
+  ///   }
+  /// }
+  /// ```
   fn do_evaltime_replacement(
     &mut self,
     import_name: &'a str,
@@ -285,101 +298,12 @@ impl<'a> PigmentTraverse<'a> {
       return;
     }
 
-    // Get the program node from the context
-    let program = ctx.root();
-
-    // Create a map to store declarations by symbol ID
-    let mut declarations: HashMap<SymbolId, &Statement<'a>> = HashMap::new();
-
-    // First pass: collect all declarations
-    for statement in program.body.iter() {
-      match statement {
-        Statement::VariableDeclaration(decl) => {
-          let decl = decl.unbox();
-          for declarator in &decl.declaration_list {
-            if let Some(id) = &declarator.id {
-              if let Some(symbol_id) = id.symbol_id() {
-                declarations.insert(symbol_id, statement);
-              }
-            }
-          }
-        }
-        Statement::FunctionDeclaration(func) => {
-          let func = func.unbox();
-          if let Some(id) = &func.id {
-            if let Some(symbol_id) = id.symbol_id() {
-              declarations.insert(symbol_id, statement);
-            }
-          }
-        }
-        Statement::ClassDeclaration(class) => {
-          let class = class.unbox();
-          if let Some(id) = &class.id {
-            if let Some(symbol_id) = id.symbol_id() {
-              declarations.insert(symbol_id, statement);
-            }
-          }
-        }
-        _ => {}
-      }
-    }
-
-    // Second pass: process tracked identifiers
     for symbol_id in self.identifiers.iter() {
-      if let Some(declaration) = declarations.get(symbol_id) {
-        match declaration {
-          Statement::VariableDeclaration(var_decl) => {
-            let var_decl = var_decl.unbox();
-            // Find the specific declarator for this symbol
-            if let Some(declarator) = var_decl.declaration_list.iter().find(|d| {
-              d.id
-                .as_ref()
-                .and_then(|id| id.symbol_id())
-                .map_or(false, |id| id == *symbol_id)
-            }) {
-              // Process the variable declaration
-              if let Some(id) = &declarator.id {
-                dbg!(
-                  "Found variable declaration for",
-                  id.name.as_str(),
-                  "with symbol ID",
-                  symbol_id
-                );
-              }
-            }
-          }
-          Statement::FunctionDeclaration(func_decl) => {
-            let func_decl = func_decl.unbox();
-            if let Some(id) = &func_decl.id {
-              dbg!(
-                "Found function declaration for",
-                id.name.as_str(),
-                "with symbol ID",
-                symbol_id
-              );
-            }
-          }
-          Statement::ClassDeclaration(class_decl) => {
-            let class_decl = class_decl.unbox();
-            if let Some(id) = &class_decl.id {
-              dbg!(
-                "Found class declaration for",
-                id.name.as_str(),
-                "with symbol ID",
-                symbol_id
-              );
-            }
-          }
-          _ => {}
-        }
-      } else {
-        // If we can't find a declaration, it might be:
-        // 1. A parameter
-        // 2. A class field
-        // 3. A function expression
-        // 4. Or something else
-        dbg!("No declaration found for symbol ID", symbol_id);
+      if self.already_inserted_identifiers.contains(symbol_id) {
+        continue;
       }
+
+      self.already_inserted_identifiers.insert(*symbol_id);
     }
 
     self.identifiers.clear();
@@ -439,7 +363,8 @@ impl<'a> Traverse<'a> for PigmentTraverse<'a> {
     self.is_inside_relevant_expression = true;
   }
 
-  /// If we are inside Pigment relevant expression, and an identifier is encountered that is not one of the Pigment imports, track its symbol id.
+  /// If we are inside Pigment relevant expression, and an identifier is encountered that is not one
+  /// of the Pigment imports, track its symbol id.
   /// This will then be used to track its original statement in the code and copy over to the new ast.
   fn enter_identifier_reference(
     &mut self,
@@ -450,11 +375,10 @@ impl<'a> Traverse<'a> for PigmentTraverse<'a> {
       return;
     }
 
-    if let Some(symbol_id) = ctx
-      .scoping()
-      .get_reference(identifier_reference.reference_id())
-      .symbol_id()
-    {
+    let id_ref = identifier_reference.reference_id();
+    let reference = ctx.scoping().get_reference(id_ref);
+
+    if let Some(symbol_id) = reference.symbol_id() {
       if self.imported_identifiers.contains_key(&symbol_id) {
         return;
       }

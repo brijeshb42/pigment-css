@@ -38,10 +38,9 @@ pub fn transform(code: String, file_path: String) -> TransformResult {
       code_to_evaluate: None,
     };
   }
-  let semantic = SemanticBuilder::new()
+  let semantic_builder = SemanticBuilder::new()
     .with_check_syntax_error(true)
     .build(&program.program);
-  let (scoping, _) = semantic.semantic.into_scoping_and_nodes();
 
   let mut pigment_traverse = traverse::PigmentTraverse::new(&allocator, &file_path);
 
@@ -64,6 +63,8 @@ pub fn transform(code: String, file_path: String) -> TransformResult {
     .allowed_imports
     .insert("@pigment-css/react", react_identifiers);
   // End setting user config.
+
+  let (scoping, _) = semantic_builder.semantic.into_scoping_and_nodes();
 
   traverse_mut(
     &mut pigment_traverse,

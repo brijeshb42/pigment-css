@@ -17,8 +17,12 @@ const a1 = pigment.css`
   background-color: ${color};
 `;
 
-const a2 = css1('div')`
+const a2 = css1`
   color: red;
+
+  .${a1} {
+    color: blue;
+  }
 `;
 
 const a3 = pigment.styled`

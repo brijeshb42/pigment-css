@@ -1,7 +1,8 @@
-use oxc::allocator::{Allocator, Box as ArenaBox, Vec as ArenaVec};
+use oxc::allocator::{Allocator, Box as ArenaBox};
 use oxc::ast::ast::{
-  CallExpression, Expression, FormalParameterKind, FunctionType, ImportDeclaration,
-  ImportDeclarationSpecifier, ImportOrExportKind, PropertyKind, TaggedTemplateExpression,
+  CallExpression, Expression, FormalParameterKind, FunctionType, IdentifierReference,
+  ImportDeclaration, ImportDeclarationSpecifier, ImportOrExportKind, PropertyKind,
+  TaggedTemplateExpression,
 };
 use oxc::ast::{AstBuilder, NONE};
 use oxc::span::SPAN;
@@ -9,48 +10,23 @@ use oxc_semantic::SymbolId;
 use oxc_traverse::{Ancestor, Traverse, TraverseCtx};
 use std::collections::{HashMap, HashSet};
 
+mod slugify;
+
 /// Meta tag used for Pigment CSS transformations
 const PIGMENT_META_TAG: &str = "__pigment_meta";
 
-/// Character sets for class name generation
-const ALPHABET: &[u8] = b"abcdefghijklmnopqrstuvwxyz";
-const ALPHANUMERIC: &[u8] = b"abcdefghijklmnopqrstuvwxyz0123456789";
-
-/// Generates a deterministic class name using FNV-1a hashing
-fn fnv1a_hash_classname(s: &str) -> String {
-  let mut hash: u64 = 0xcbf29ce484222325;
-  const PRIME: u64 = 0x100000001b3;
-
-  for &byte in s.as_bytes() {
-    hash ^= byte as u64;
-    hash = hash.wrapping_mul(PRIME);
-  }
-
-  let mut encoded = String::with_capacity(10);
-  let mut num = hash;
-
-  encoded.push(ALPHABET[(num % ALPHABET.len() as u64) as usize] as char);
-  num /= ALPHABET.len() as u64;
-
-  while num > 0 {
-    encoded.push(ALPHANUMERIC[(num % ALPHANUMERIC.len() as u64) as usize] as char);
-    num /= ALPHANUMERIC.len() as u64;
-  }
-
-  encoded
-}
-
 /// A traverser for Pigment CSS that handles theme transformations
 pub struct PigmentTraverse<'a> {
-  allocator: &'a Allocator,
   file_path: &'a str,
   pub ast: AstBuilder<'a>,
   /// Maps import sources to their allowed identifiers
   pub allowed_imports: HashMap<&'a str, HashSet<&'a str>>,
   /// Maps symbol IDs to their import information
-  imported_identifiers: HashMap<SymbolId, (&'a str, &'a str)>,
+  pub imported_identifiers: HashMap<SymbolId, (&'a str, &'a str)>,
   /// Counter for generating unique identifiers
   counter: HashMap<&'a str, u32>,
+  pub identifiers: HashSet<SymbolId>,
+  is_inside_relevant_expression: bool,
 }
 
 impl<'a> PigmentTraverse<'a> {
@@ -58,12 +34,13 @@ impl<'a> PigmentTraverse<'a> {
   #[must_use]
   pub fn new(allocator: &'a Allocator, file_path: &'a str) -> Self {
     Self {
-      allocator,
       file_path,
       ast: AstBuilder::new(allocator),
       allowed_imports: HashMap::new(),
       imported_identifiers: HashMap::new(),
       counter: HashMap::new(),
+      identifiers: HashSet::new(),
+      is_inside_relevant_expression: false,
     }
   }
 
@@ -94,10 +71,10 @@ impl<'a> PigmentTraverse<'a> {
   ) -> Expression<'a> {
     let hash_count = self.get_count_for(import_name);
     let str_to_hash = format!("{}-{}-{}", self.file_path, import_name, hash_count);
-    let slug = fnv1a_hash_classname(&str_to_hash);
+    let slug = slugify::slugify(&str_to_hash);
 
     // Create meta object properties
-    let mut meta_properties = ArenaVec::new_in(self.allocator);
+    let mut meta_properties = ctx.ast.vec();
     meta_properties.push(ctx.ast.object_property_kind_object_property(
       SPAN,
       PropertyKind::Init,
@@ -147,7 +124,7 @@ impl<'a> PigmentTraverse<'a> {
     );
 
     // Assemble final object
-    let mut properties = ArenaVec::new_in(self.allocator);
+    let mut properties = ctx.ast.vec();
     properties.push(
       ctx.ast.object_property_kind_object_property(
         SPAN,
@@ -174,13 +151,13 @@ impl<'a> PigmentTraverse<'a> {
     ctx.ast.expression_object(SPAN, properties, None)
   }
 
-  /// Handles call tag processing and returns replacement if needed
-  fn handle_call_tag(
-    &mut self,
-    tag: &Expression<'a>,
-    ctx: &mut TraverseCtx<'a>,
-  ) -> Option<Expression<'a>> {
-    match tag {
+  /// Checks if an expression is a valid tag expression and returns the import info if it is
+  fn get_tag_info(
+    &self,
+    expr: &Expression<'a>,
+    ctx: &TraverseCtx<'a>,
+  ) -> Option<(&'a str, &'a str)> {
+    match expr {
       Expression::Identifier(identifier) => {
         if let Some(symbol_id) = ctx
           .scoping()
@@ -190,7 +167,7 @@ impl<'a> PigmentTraverse<'a> {
           if let Some((import_name, import_source)) = self.imported_identifiers.get(&symbol_id) {
             if let Some(import_check) = self.allowed_imports.get(import_source) {
               if import_check.contains(import_name) {
-                return Some(self.do_evaltime_replacement(import_name, import_source, ctx));
+                return Some((import_name, import_source));
               }
             }
           }
@@ -207,7 +184,7 @@ impl<'a> PigmentTraverse<'a> {
               let import_name = &static_member_expression.property.name.as_str();
               if let Some(import_check) = self.allowed_imports.get(import_source) {
                 if import_check.contains(import_name) {
-                  return Some(self.do_evaltime_replacement(import_name, import_source, ctx));
+                  return Some((import_name, import_source));
                 }
               }
             }
@@ -217,6 +194,35 @@ impl<'a> PigmentTraverse<'a> {
       _ => {}
     }
     None
+  }
+
+  fn is_relevant_expression(&self, expr: &Expression<'a>, ctx: &TraverseCtx<'a>) -> bool {
+    if !matches!(
+      expr,
+      Expression::TaggedTemplateExpression(_) | Expression::CallExpression(_)
+    ) {
+      return false;
+    }
+
+    // Check if the expression's tag/callee is a valid import
+    match expr {
+      Expression::TaggedTemplateExpression(tagged) => self.get_tag_info(&tagged.tag, ctx).is_some(),
+      Expression::CallExpression(call) => self.get_tag_info(&call.callee, ctx).is_some(),
+      _ => false,
+    }
+  }
+
+  /// Handles call tag processing and returns replacement if needed
+  fn handle_call_tag(
+    &mut self,
+    tag: &Expression<'a>,
+    ctx: &mut TraverseCtx<'a>,
+  ) -> Option<Expression<'a>> {
+    if let Some((import_name, import_source)) = self.get_tag_info(tag, ctx) {
+      Some(self.do_evaltime_replacement(import_name, import_source, ctx))
+    } else {
+      None
+    }
   }
 
   /// Transforms a tagged template expression
@@ -315,6 +321,32 @@ impl<'a> Traverse<'a> for PigmentTraverse<'a> {
     }
   }
 
+  fn enter_expression(&mut self, node: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
+    if !self.is_relevant_expression(node, ctx) {
+      return;
+    }
+
+    self.is_inside_relevant_expression = true;
+  }
+
+  fn enter_identifier_reference(
+    &mut self,
+    node: &mut IdentifierReference<'a>,
+    ctx: &mut TraverseCtx<'a>,
+  ) {
+    if !self.is_inside_relevant_expression {
+      return;
+    }
+
+    if let Some(symbol_id) = ctx.scoping().get_reference(node.reference_id()).symbol_id() {
+      if self.identifiers.contains(&symbol_id) {
+        return;
+      }
+      dbg!(node.name.as_str());
+      self.identifiers.insert(symbol_id);
+    }
+  }
+
   /// Handles expression transformation
   fn exit_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
     if !matches!(
@@ -325,8 +357,14 @@ impl<'a> Traverse<'a> for PigmentTraverse<'a> {
     }
 
     *expr = match ctx.ast.move_expression(expr) {
-      Expression::TaggedTemplateExpression(e) => self.transform_tagged_template_expression(e, ctx),
-      Expression::CallExpression(e) => self.transform_call_expression(e, ctx),
+      Expression::TaggedTemplateExpression(e) => {
+        self.is_inside_relevant_expression = false;
+        self.transform_tagged_template_expression(e, ctx)
+      }
+      Expression::CallExpression(e) => {
+        self.is_inside_relevant_expression = false;
+        self.transform_call_expression(e, ctx)
+      }
       _ => unreachable!(),
     };
   }

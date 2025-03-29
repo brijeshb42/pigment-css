@@ -75,6 +75,9 @@ pub fn transform(code: String, file_path: String) -> TransformResult {
     })
     .build(&program.program);
 
+  dbg!(&pigment_traverse.imported_identifiers);
+  dbg!(&pigment_traverse.identifiers);
+
   TransformResult {
     is_success: true,
     code: Some(code.code),

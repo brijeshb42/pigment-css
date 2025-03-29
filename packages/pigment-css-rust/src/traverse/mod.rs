@@ -22,7 +22,7 @@ pub struct PigmentTraverse<'a> {
   /// Maps import sources to their allowed identifiers
   pub allowed_imports: HashMap<&'a str, HashSet<&'a str>>,
   /// Maps symbol IDs to their import information
-  pub imported_identifiers: HashMap<SymbolId, (&'a str, &'a str)>,
+  imported_identifiers: HashMap<SymbolId, (&'a str, &'a str)>,
   /// Counter for generating unique identifiers
   counter: HashMap<&'a str, u32>,
   pub identifiers: HashSet<SymbolId>,
@@ -331,18 +331,21 @@ impl<'a> Traverse<'a> for PigmentTraverse<'a> {
 
   fn enter_identifier_reference(
     &mut self,
-    node: &mut IdentifierReference<'a>,
+    identifier_reference: &mut IdentifierReference<'a>,
     ctx: &mut TraverseCtx<'a>,
   ) {
     if !self.is_inside_relevant_expression {
       return;
     }
 
-    if let Some(symbol_id) = ctx.scoping().get_reference(node.reference_id()).symbol_id() {
-      if self.identifiers.contains(&symbol_id) {
+    if let Some(symbol_id) = ctx
+      .scoping()
+      .get_reference(identifier_reference.reference_id())
+      .symbol_id()
+    {
+      if self.imported_identifiers.contains_key(&symbol_id) {
         return;
       }
-      dbg!(node.name.as_str());
       self.identifiers.insert(symbol_id);
     }
   }

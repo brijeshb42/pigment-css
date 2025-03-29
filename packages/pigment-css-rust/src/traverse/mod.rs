@@ -1,10 +1,10 @@
 use oxc::allocator::{Allocator, Box as ArenaBox};
 use oxc::ast::ast::{
-  CallExpression, Expression, FormalParameterKind, FunctionType, IdentifierReference,
-  ImportDeclaration, ImportDeclarationSpecifier, ImportOrExportKind, PropertyKind,
-  TaggedTemplateExpression,
+  BindingIdentifier, CallExpression, Expression, FormalParameterKind, FunctionType,
+  IdentifierReference, ImportDeclaration, ImportDeclarationSpecifier, ImportOrExportKind, Program,
+  PropertyKind, Statement, TaggedTemplateExpression, VariableDeclaration, VariableDeclarator,
 };
-use oxc::ast::{AstBuilder, NONE};
+use oxc::ast::NONE;
 use oxc::span::SPAN;
 use oxc_semantic::SymbolId;
 use oxc_traverse::{Ancestor, Traverse, TraverseCtx};
@@ -18,29 +18,29 @@ const PIGMENT_META_TAG: &str = "__pigment_meta";
 /// A traverser for Pigment CSS that handles theme transformations
 pub struct PigmentTraverse<'a> {
   file_path: &'a str,
-  pub ast: AstBuilder<'a>,
   /// Maps import sources to their allowed identifiers
   pub allowed_imports: HashMap<&'a str, HashSet<&'a str>>,
   /// Maps symbol IDs to their import information
   imported_identifiers: HashMap<SymbolId, (&'a str, &'a str)>,
   /// Counter for generating unique identifiers
   counter: HashMap<&'a str, u32>,
-  pub identifiers: HashSet<SymbolId>,
+  identifiers: HashSet<SymbolId>,
   is_inside_relevant_expression: bool,
+  pub program_to_evaluate: Option<&'a Program<'a>>,
 }
 
 impl<'a> PigmentTraverse<'a> {
   /// Creates a new PigmentTraverse instance
   #[must_use]
-  pub fn new(allocator: &'a Allocator, file_path: &'a str) -> Self {
+  pub fn new(_allocator: &'a Allocator, file_path: &'a str) -> Self {
     Self {
       file_path,
-      ast: AstBuilder::new(allocator),
       allowed_imports: HashMap::new(),
       imported_identifiers: HashMap::new(),
       counter: HashMap::new(),
       identifiers: HashSet::new(),
       is_inside_relevant_expression: false,
+      program_to_evaluate: None,
     }
   }
 
@@ -277,6 +277,113 @@ impl<'a> PigmentTraverse<'a> {
       .ast
       .expression_call(span, callee, type_arguments, arguments, optional)
   }
+
+  fn cleanup_collected_identifiers(&mut self, ctx: &mut TraverseCtx<'a>) {
+    self.is_inside_relevant_expression = false;
+
+    if self.identifiers.is_empty() {
+      return;
+    }
+
+    // Get the program node from the context
+    let program = ctx.root();
+
+    // Create a map to store declarations by symbol ID
+    let mut declarations: HashMap<SymbolId, &Statement<'a>> = HashMap::new();
+
+    // First pass: collect all declarations
+    for statement in program.body.iter() {
+      match statement {
+        Statement::VariableDeclaration(decl) => {
+          let decl = decl.unbox();
+          for declarator in &decl.declaration_list {
+            if let Some(id) = &declarator.id {
+              if let Some(symbol_id) = id.symbol_id() {
+                declarations.insert(symbol_id, statement);
+              }
+            }
+          }
+        }
+        Statement::FunctionDeclaration(func) => {
+          let func = func.unbox();
+          if let Some(id) = &func.id {
+            if let Some(symbol_id) = id.symbol_id() {
+              declarations.insert(symbol_id, statement);
+            }
+          }
+        }
+        Statement::ClassDeclaration(class) => {
+          let class = class.unbox();
+          if let Some(id) = &class.id {
+            if let Some(symbol_id) = id.symbol_id() {
+              declarations.insert(symbol_id, statement);
+            }
+          }
+        }
+        _ => {}
+      }
+    }
+
+    // Second pass: process tracked identifiers
+    for symbol_id in self.identifiers.iter() {
+      if let Some(declaration) = declarations.get(symbol_id) {
+        match declaration {
+          Statement::VariableDeclaration(var_decl) => {
+            let var_decl = var_decl.unbox();
+            // Find the specific declarator for this symbol
+            if let Some(declarator) = var_decl.declaration_list.iter().find(|d| {
+              d.id
+                .as_ref()
+                .and_then(|id| id.symbol_id())
+                .map_or(false, |id| id == *symbol_id)
+            }) {
+              // Process the variable declaration
+              if let Some(id) = &declarator.id {
+                dbg!(
+                  "Found variable declaration for",
+                  id.name.as_str(),
+                  "with symbol ID",
+                  symbol_id
+                );
+              }
+            }
+          }
+          Statement::FunctionDeclaration(func_decl) => {
+            let func_decl = func_decl.unbox();
+            if let Some(id) = &func_decl.id {
+              dbg!(
+                "Found function declaration for",
+                id.name.as_str(),
+                "with symbol ID",
+                symbol_id
+              );
+            }
+          }
+          Statement::ClassDeclaration(class_decl) => {
+            let class_decl = class_decl.unbox();
+            if let Some(id) = &class_decl.id {
+              dbg!(
+                "Found class declaration for",
+                id.name.as_str(),
+                "with symbol ID",
+                symbol_id
+              );
+            }
+          }
+          _ => {}
+        }
+      } else {
+        // If we can't find a declaration, it might be:
+        // 1. A parameter
+        // 2. A class field
+        // 3. A function expression
+        // 4. Or something else
+        dbg!("No declaration found for symbol ID", symbol_id);
+      }
+    }
+
+    self.identifiers.clear();
+  }
 }
 
 impl<'a> Traverse<'a> for PigmentTraverse<'a> {
@@ -321,6 +428,9 @@ impl<'a> Traverse<'a> for PigmentTraverse<'a> {
     }
   }
 
+  /// Enters expression to check if it is Pigment relevant expression or not.
+  /// If it is, then it sets the boolean `is_inside_relevant_expression` true.
+  /// This is done so that we can track the identifiers used inside the expression.
   fn enter_expression(&mut self, node: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
     if !self.is_relevant_expression(node, ctx) {
       return;
@@ -329,6 +439,8 @@ impl<'a> Traverse<'a> for PigmentTraverse<'a> {
     self.is_inside_relevant_expression = true;
   }
 
+  /// If we are inside Pigment relevant expression, and an identifier is encountered that is not one of the Pigment imports, track its symbol id.
+  /// This will then be used to track its original statement in the code and copy over to the new ast.
   fn enter_identifier_reference(
     &mut self,
     identifier_reference: &mut IdentifierReference<'a>,
@@ -350,7 +462,10 @@ impl<'a> Traverse<'a> for PigmentTraverse<'a> {
     }
   }
 
-  /// Handles expression transformation
+  /// If we are inside Pigment relevant expression, then we transform the expression.
+  /// We also reset the `is_inside_relevant_expression` boolean to false when we exit
+  /// the expression to restart the tracking when the next Pigment relevant expression
+  /// is encountered.
   fn exit_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
     if !matches!(
       expr,
@@ -361,11 +476,11 @@ impl<'a> Traverse<'a> for PigmentTraverse<'a> {
 
     *expr = match ctx.ast.move_expression(expr) {
       Expression::TaggedTemplateExpression(e) => {
-        self.is_inside_relevant_expression = false;
+        self.cleanup_collected_identifiers(ctx);
         self.transform_tagged_template_expression(e, ctx)
       }
       Expression::CallExpression(e) => {
-        self.is_inside_relevant_expression = false;
+        self.cleanup_collected_identifiers(ctx);
         self.transform_call_expression(e, ctx)
       }
       _ => unreachable!(),

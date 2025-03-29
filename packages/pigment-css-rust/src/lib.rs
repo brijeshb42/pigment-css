@@ -18,6 +18,7 @@ pub struct TransformResult {
   pub is_success: bool,
   pub code: Option<String>,
   pub errors: Vec<String>,
+  pub code_to_evaluate: Option<String>,
 }
 
 #[napi]
@@ -34,6 +35,7 @@ pub fn transform(code: String, file_path: String) -> TransformResult {
       is_success: false,
       code: None,
       errors: program.errors.iter().map(|e| e.to_string()).collect(),
+      code_to_evaluate: None,
     };
   }
   let semantic = SemanticBuilder::new()
@@ -42,6 +44,8 @@ pub fn transform(code: String, file_path: String) -> TransformResult {
   let (scoping, _) = semantic.semantic.into_scoping_and_nodes();
 
   let mut pigment_traverse = traverse::PigmentTraverse::new(&allocator, &file_path);
+
+  // Start setting user config.
   // To be provided through user config
   let mut css_identifiers = HashSet::new();
   css_identifiers.insert("css");
@@ -59,6 +63,7 @@ pub fn transform(code: String, file_path: String) -> TransformResult {
   pigment_traverse
     .allowed_imports
     .insert("@pigment-css/react", react_identifiers);
+  // End setting user config.
 
   traverse_mut(
     &mut pigment_traverse,
@@ -75,11 +80,25 @@ pub fn transform(code: String, file_path: String) -> TransformResult {
     })
     .build(&program.program);
 
-  dbg!(&pigment_traverse.identifiers);
+  let code_to_evaluate = if let Some(program_to_eval) = pigment_traverse.program_to_evaluate {
+    Some(
+      CodeGenerator::new()
+        .with_options(CodegenOptions {
+          single_quote: true,
+          minify: false,
+          ..Default::default()
+        })
+        .build(program_to_eval)
+        .code,
+    )
+  } else {
+    None
+  };
 
   TransformResult {
     is_success: true,
     code: Some(code.code),
     errors: vec![],
+    code_to_evaluate,
   }
 }

@@ -3,12 +3,17 @@ import { css as css1 } from '@pigment-css/css';
 import { css } from '@emotion/react';
 import { color } from './color';
 
+const colors = {
+  red: 'red',
+  blue: 'blue',
+};
+
 const a = css`
   color: red;
 `;
 
 const a1 = pigment.css`
-  color: red;
+  color: ${colors.red};
   background-color: ${color};
 `;
 
@@ -21,7 +26,7 @@ const a3 = pigment.styled`
 `;
 
 const c = css({ color: 'red', backgroundColor: color.red });
-const c1 = pigment.css({ color: 'red', backgroundColor: color.blue });
+const c1 = pigment.css({ color: colors.red, backgroundColor: color.blue });
 const c2 = css1({ color: 'red' });
 
 console.log(a);

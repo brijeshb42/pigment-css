@@ -1,6 +1,6 @@
 {
   "name": "@pigment-css/theme",
-  "version": "0.0.30",
+  "version": "0.0.31",
   "author": "MUI Team",
   "description": "Theme related JS and TS utilities to be shared across other Pigment CSS libraries.",
   "license": "MIT",

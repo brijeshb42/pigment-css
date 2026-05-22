@@ -1,6 +1,6 @@
 {
   "name": "@pigment-css/nextjs-plugin",
-  "version": "0.0.30",
+  "version": "0.0.31",
   "author": "MUI Team",
   "description": "Next.js integration for Pigment CSS.",
   "license": "MIT",

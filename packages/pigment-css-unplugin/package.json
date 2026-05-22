@@ -1,6 +1,6 @@
 {
   "name": "@pigment-css/unplugin",
-  "version": "0.0.30",
+  "version": "0.0.31",
   "author": "MUI Team",
   "description": "webpack integration for Pigment CSS.",
   "license": "MIT",

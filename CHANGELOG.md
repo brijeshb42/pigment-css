@@ -1,5 +1,57 @@
 # [Versions](https://mui.com/versions/)
 
+## 0.0.31
+
+<!-- generated comparing v0.0.30..master -->
+
+_May 22, 2026_
+
+### `@pigment-css/react@0.0.31`
+
+- [Grid] size proptype to accept grow and auto values (#379) @ablagoev
+- [core] Update wyw version (#393) @brijeshb42
+- [code-infra] Bump wyw version (#416) @brijeshb42
+
+### `@pigment-css/nextjs-plugin@0.0.31`
+
+- [nextjs] add to support next.js 16 (#414) @jooy2
+- [core] Update wyw version (#393) @brijeshb42
+- [code-infra] Bump wyw version (#416) @brijeshb42
+
+### `@pigment-css/vite-plugin@0.0.31`
+
+- [core] Update wyw version (#393) @brijeshb42
+- [code-infra] Bump wyw version (#416) @brijeshb42
+
+### `@pigment-css/unplugin@0.0.31`
+
+- [core] Update wyw version (#393) @brijeshb42
+- [code-infra] Bump wyw version (#416) @brijeshb42
+
+### Docs
+
+- [docs-infra] Normalize netlify.toml in org (1457045) @oliviertassinari
+
+### Internal
+
+- [code-infra] Give a stable name to dev tool app (923a8e7) @oliviertassinari
+- [code-infra] Normalize author package in org (faf0536) @oliviertassinari
+- [code-infra] Polish VS Code DX (#358) @oliviertassinari
+- [core] Fix ESLint reference name (ba2c117) @oliviertassinari
+- [core] Improve release (#359) @oliviertassinari
+- [core] Resolve pnpm peer dep warnings (#369) @brijeshb42
+- [example] Fix type import for ExtendTheme (#267) @yoohahn
+- [infra] Uniformize viewort (a484824) @oliviertassinari
+- [internal] Update changelog template (95beb64) @oliviertassinari
+- [internal] Sort license field to be under description (216329e) @oliviertassinari
+- [internal] Prettier all if dependencies changes (7d763a0) @oliviertassinari
+- [internal] Normalize Action description (a2adf41) @oliviertassinari
+- [support-infra] Fix duplicate GitHub Action running on PR comments (6265543) @oliviertassinari
+- [test] Remove required checkout step (97b205d) @oliviertassinari
+
+All contributors of this release in alphabetical order: @ablagoev, @brijeshb42, @jooy2, @oliviertassinari,
+@yoohahn
+
 ## 0.0.30
 
 <!-- generated comparing v0.0.29..master -->
